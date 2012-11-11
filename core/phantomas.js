@@ -181,10 +181,15 @@ phantomas.prototype = {
 			};
 		}
 
+		// allow cross-domain XHR requests (used to retrieve components content)
+		this.page.settings.webSecurityEnabled = false;
+		this.page.settings.localToRemoteUrlAccessEnabled = true;
+
 		// print out debug messages
 		this.log('Opening <' + this.url + '>...');
 		this.log('Using ' + this.page.settings.userAgent);
 		this.log('Viewport set to ' + this.page.viewportSize.height + 'x' + this.page.viewportSize.width);
+		this.log('Using the following PhantomJS settings: ' + JSON.stringify(this.page.settings));
 
 		// bind basic events
 		this.page.onInitialized = this.proxy(this.onInitialized);

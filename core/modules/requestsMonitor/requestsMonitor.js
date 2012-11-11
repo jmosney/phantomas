@@ -44,6 +44,36 @@ exports.module = function(phantomas) {
 		}
 	}
 
+	/**
+	 * Fetch component using synchronous XHR (aka The Evil Beast)
+	 *
+	 * @see github/yslow/src/phantomjs/compontent.js
+	 * @see http://code.google.com/p/phantomjs/issues/detail?id=156
+	 * @see http://code.google.com/p/phantomjs/issues/detail?id=158
+	 * @see http://facebook.stackoverflow.com/questions/12215844/get-html-with-current-styles-maybe-inlined-of-a-page-that-finished-rendering-a
+	 */
+	function fetchContent(url) {
+		var xhr, content;
+
+		phantomas.log("Fetching <" + url + ">...");
+
+		try {
+			xhr = new XMLHttpRequest();
+			xhr.open('GET', url, false /* sync req */);
+			xhr.send();
+			content = xhr.responseText || '';
+
+			phantomas.log("Fetched " + (content.length / 1024).toFixed(2) + " kB");
+		}
+		catch (ex) {
+			phantomas.log("Fetching <" + url + "> failed!");
+			phantomas.log(ex.message);
+			//phantomas.log(ex);
+		}
+
+		return content;
+	}
+
 	// when the monitoring started?
 	var start;
 	phantomas.on('pageOpen', function(res) {
@@ -173,6 +203,12 @@ exports.module = function(phantomas) {
 
 				if (entry.gzip) {
 					phantomas.incrMetric('gzipRequests');
+				}
+
+				// now fetch the content using synchronous XHR
+				if (!entry.base64) {
+					entry.content = fetchContent(res.url);
+					entry.contentSize = (entry.content || '').length;
 				}
 
 				// emit an event for other modules
